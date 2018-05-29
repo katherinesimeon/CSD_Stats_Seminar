@@ -1,0 +1,188 @@
+---
+title: "Statistical Documentation with R Markdown"
+author: "Katherine Simeon"
+date: "May 29, 2018"
+output: 
+  ioslides_presentation:
+    widescreen: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+# Make sure packages are installed
+library(languageR) 
+library(lme4)
+library(ggplot2)
+library(car)
+data("lexdec") # This is the data we are using today!
+```
+
+## Why is statistical documentation important? 
+
+>- Reproducibility  
+>- Sanity of future self
+>- Good communication practice
+
+## Challenges when documenting your work  
+
+>- Missing information (assumes you'll remember something but you actually won't)       
+>- Many moving parts        
+>- Time consuming (to create and maintain)        
+
+## What makes good documentation? {.build}
+  
+Varies/depends!  
+  
+>- Who's the intended **audience**?  (future you vs. fellow labmate vs. external person)     
+>- What's the intended **use**? (how specific or generalizable should it be?)       
+>- Statistical Software (in this example, I'll be using R)      
+      
+Regardless, there should still be a generally standardized format:  
+
+>- Version control / revision history            
+>- Software dependencies and what files are needed (and what format they should be in)     
+
+## Documentation components  
+  
+>- Data & the process for cleaning it    
+>- Description of IVs & DVs (how they're quantified, levels/conditions for each variable, etc.)     
+>- Syntax for statistical analyses    
+>- Syntax for figures (if applicable)  
+>- Thorough commenting
+
+## The lowdown on R Markdown 
+  
+- Creates reproducible, dynamic documents with R code embedded  
+- Technically markdown, but specific to **R**    
+
+## Getting started with R Markdown     
+  
+```{r, echo=TRUE, eval=FALSE}
+install.packages('rmarkdown')
+```
+  
+>1. Installing package should automatically install dependencies       
+>2. In drop-down menu, create new .Rmd file        
+>3. Choose output format (this can also be modified later in the header)     
+>4. Create your document (this [cheatsheet](https://www.rstudio.com/wp-content/uploads/2016/03/rmarkdown-cheatsheet-2.0.pdf) is a great place to start)     
+>5. "Knit" it into desired output format!      
+
+## R Markdown Basics {.build} 
+  
+R code is preceded by: ```{r, *a bunch of arguments*}```    
+     
+_The important arguments are:_    
+  
+```echo=TRUE or FALSE```  
+Should the code be _included_ in the final document?   
+  
+```eval=TRUE or FALSE```  
+Should the code be _evaluated_ in the final document?           
+  
+## Setting up your document {.build}  
+  
+Every new file has a ```{r setup}```, where you should:
+  
+- Set up your working directory   
+- Load necessary packages   
+  
+My set up for this presentation looks like this:  
+```{r, echo=TRUE, eval=FALSE}
+# Make sure packages are installed
+library(languageR) 
+library(lme4)
+library(ggplot2)
+library(car)
+data("lexdec") # This is the data we are using today!
+```
+
+## Our data {.build}  
+  
+_**lexdec**_ - Lexical decision latencies elicited from 21 subjects for 79 English concrete nouns.  
+   
+- _Native Language_ is classified for each subject as **English** or **Other**.     
+- Each word is sorted into two levels of _semantic class_: **animal** or **plant**.
+  
+From [languageR package](https://cran.r-project.org/web/packages/languageR/languageR.pdf)  
+
+## lexdec {.build}
+  
+```{r, echo=TRUE, eval=TRUE}
+# This dataset has a lot of columns
+dim(lexdec)
+
+# Only printing the first 6 rows of the first 8 columns 
+head(lexdec[,1:8])
+```
+
+## Example: A mixed effects model {.build} 
+  
+```{r, echo=FALSE, eval=TRUE}
+# Setting up contrasts and centering data for analysis  
+# Set contrasts & types for variables of interest: semantic class ('animal' / 'plant') and native language ('english' / 'other'). 
+contrasts(lexdec$Class) <- c(.5,-.5)
+contrasts(lexdec$NativeLanguage) <- c(.5,-.5)
+#'center' the continuous variable we're using so that the mean is at 0
+lexdec$FrequencyC <- lexdec$Frequency - mean(lexdec$Frequency)
+# also calculate numeric versions of Class and NativeLanguage that have the values of .5 and -.5
+lexdec$ClassN <- (as.numeric(lexdec$Class)-1.5)
+lexdec$NativeLanguageN <- (as.numeric(lexdec$NativeLanguage)-1.5)
+```
+
+In this model, we want to predict reaction time (RT) from the fixed effects of native language, and semantic class.  
+  
+We want to account for random effects of subjects and items (words).    
+
+```{r, echo=TRUE, eval=TRUE}
+model <- lmer(RT ~ NativeLanguageN*ClassN # fixed effects on DV
+              + (1+ClassN|Subject) # Random effects of subject 
+              + (1+NativeLanguageN|Word), # Random effects of item
+              data=lexdec,REML=F)  
+```
+  
+_Thank you to Laurel Brehm for teaching us this 2 years ago!_  
+_See her tutorial [here](https://sites.psu.edu/laurelbrehm/scripts-stats/)_
+
+## Sorry output does not fit on the slide  
+
+(And I was a too lazy to adjust it...)  
+```{r, echo=TRUE, eval=TRUE}
+summary(model) # Let's see the model
+```
+  
+----  
+```{r, echo=TRUE, eval=TRUE}
+Anova(model) # Let's see p-values
+```
+
+## Let's make a figure! {.build}
+  
+Let's plot RT based on word frequency, sorted by native language and semantic class.  
+  
+```{r, echo=FALSE, eval=TRUE}
+ggplot(aes(x = Frequency, y = RT, colour = NativeLanguage),
+       data = lexdec) +
+  geom_point() +
+  scale_x_continuous("Written log frequency (CELEX)") +
+  scale_y_continuous("Lexical decision log RTs") +
+  facet_grid(.~Class)
+```
+
+## Advantages of documenting in R Markdown  
+  
+- Accomodates large chunks of text (no rows/paragraphs of #)       
+- Can organize your code into runnable chunks     
+- Can be "knit" into multiple formats (pdf, MS Word, HTML)       
+
+## Other fun R things (that are helpful for documentation)  {.build}
+  
+**R Projects**        
+
+- Each project is in its own directory & workspace          
+- Easy to share multiple files with collaborators     
+  
+**roxygen skeletons**         
+
+- Provides the template that is used to document functions        
+- *Code* > *Insert Roxygen Skeleton*    
+- Package: roxygen2     
