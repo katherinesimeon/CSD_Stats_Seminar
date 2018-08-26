@@ -84,7 +84,9 @@ Should the code be _evaluated_ in the final document?
 Every new file has a ```{r setup}```, where you should:
   
 - Set up your working directory   
-- Load necessary packages   
+- Load necessary packages     
+- This chunk is run automatically when you run any other chunk in your document! (so this is a good place to load your data in too)  
+  
   
 My set up for this presentation looks like this:  
 ```{r, echo=TRUE, eval=FALSE}
