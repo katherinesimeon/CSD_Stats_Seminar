@@ -1,4 +1,4 @@
-# CSD_Stats_Seminar
+# CSD Stats Seminar - Documentation with R Markdown
 
 Presentation materials for RMarkdown Tutorial, presented on May, 29, 2018 at the Northwestern CSD student-led Stats Seminar (or "Stats Chats")
 
